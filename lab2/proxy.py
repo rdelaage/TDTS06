@@ -107,8 +107,10 @@ class Proxy:
             request += data
         parsedRequest = Request()
         parsedRequest.fromBytes(request)
-        response = self.handleServer(parsedRequest)
-        client.send(response.toBytes())
+        responseBytes = self.handleServer(parsedRequest).toBytes()
+        lenSendToClient = client.send(responseBytes)
+        while lenSendToClient < len(responseBytes):
+            lenSendToClient += client.send(responseBytes[lenSendToClient:])
         client.close()
 
     def handleServer(self, request: Request) -> Response:
@@ -141,17 +143,17 @@ class Proxy:
         return responseObject
 
 def SmileyImgToTrollyImg(response: Response):
-    if response.getHeader("Content-Type") == "text/html":
-        response.data.replace("http://zebroid.ida.liu.se/fakenews/smiley.jpg", "http://zebroid.ida.liu.se/fakenews/trolly.jpg")
+    if response.getHeader("Content-Type").startswith("text/html"):
+        response.data = response.data.replace("http://zebroid.ida.liu.se/fakenews/smiley.jpg", "http://zebroid.ida.liu.se/fakenews/trolly.jpg")
 
 def SmileyToTrolly(response: Response):
-    if response.getHeader("Content-Type") == "text/html" or response.getHeader("Content-Type") == "text/plain":
-        response.data.replace("Smiley", "Trolly")
+    if response.getHeader("Content-Type").startswith("text/html") or response.getHeader("Content-Type").startswith("text/plain"):
+        response.data = response.data.replace("Smiley", "Trolly")
 
 def StockholmToLinkoping(response: Response):
-    if response.getHeader("Content-Type") == "text/html" or response.getHeader("Content-Type") == "text/plain":
-        response.data.replace("Stockholm", "Linköping")
+    if response.getHeader("Content-Type").startswith("text/html") or response.getHeader("Content-Type").startswith("text/plain"):
+        response.data = response.data.replace("Stockholm", "Linköping")
 
 if __name__ == "__main__":
-    proxy = Proxy(8081)
+    proxy = Proxy(8080)
     proxy.listen()
