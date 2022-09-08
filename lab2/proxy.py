@@ -19,6 +19,9 @@ class Request:
     def setHeader(self, header: str, value: str):
         self.headers[header] = value
 
+    def getHeader(self, header:str) -> str:
+        return self.headers[header]
+
     def toBytes(self) -> bytes:
         headers = ''
         for header, value in self.headers.items():
@@ -64,8 +67,26 @@ class Proxy:
         client.send(bytes(answer, 'utf-8'))
         client.close()
 
-def doRequest(request: Request):
-    pass
+    def handleServer(self, request: Request):
+        # sending request to Server
+        clientSocket = socket.connect(request.getHeader("Host"))
+        requestBytes = request.toBytes()
+        lenSendtoServer = clientSocket.send(requestBytes)
+        while lenSendtoServer < len(requestBytes):
+            requestBytes = requestBytes[lenSendtoServer:]
+            lenSendtoServer = clientSocket.send(requestBytes)
+
+        # receiving response from Server
+        responsefromServer = bytes()
+        responseData = clientSocket.recv(1024)
+        responsefromServer += responseData
+        while len(responseData) == 1024:
+            responseData = clientSocket.recv(1024)
+            responsefromServer += responseData
+        
+        # altering content
+        pass
+
 
 if __name__ == "__main__":
     proxy = Proxy(8081)
