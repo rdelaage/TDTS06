@@ -64,6 +64,9 @@ class Proxy:
         client.send(bytes(answer, 'utf-8'))
         client.close()
 
+def doRequest(request: Request):
+    pass
+
 if __name__ == "__main__":
     proxy = Proxy(8081)
     proxy.listen()
