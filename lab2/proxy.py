@@ -43,16 +43,27 @@ class Proxy:
 
     def listen(self):
         self.socket.listen()
-        while True:
-            (client, address) = self.socket.accept()
-            print(f"Connected by {address}")
-            self.handleClient(client)
+        try:
+            while True:
+                (client, address) = self.socket.accept()
+                print(f"Connected by {address}")
+                self.handleClient(client)
+        except KeyboardInterrupt:
+            self.socket.close()
+            print("The proxy is closed")
 
     def handleClient(self, client: socket):
+        request = bytes()
+        data = client.recv(1024)
+        request += data
+        while len(data) == 1024:
+            data = client.recv(1024)
+            request += data
+        print(request)
         answer = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHi!"
-        client.sendall(bytes(answer, 'utf-8'))
+        client.send(bytes(answer, 'utf-8'))
         client.close()
 
 if __name__ == "__main__":
-    proxy = Proxy(8080)
+    proxy = Proxy(8081)
     proxy.listen()
