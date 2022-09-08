@@ -8,7 +8,22 @@ class Request:
         self.data = ''
 
     def fromBytes(self, data: bytes):
-        pass
+        request = data.decode('utf-8')
+        splittedRequest = request.split('\r\n')
+
+        requestLine = splittedRequest[0].split()
+        splittedRequest = splittedRequest[1:]
+        self.verb = requestLine[0]
+        self.path = requestLine[1]
+
+        while splittedRequest[0] != "":
+            headerLine = splittedRequest[0]
+            key = headerLine.split(':')[0]
+            value = headerLine.split(':')[1].strip()
+            self.headers[key] = value
+            splittedRequest = splittedRequest[1:]
+
+        self.data = "\r\n".join(splittedRequest[1:])
 
     def setVerb(self, verb: str):
         self.verb = verb
