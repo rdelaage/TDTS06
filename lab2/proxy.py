@@ -126,10 +126,14 @@ class Proxy:
 
         # receiving response from Server
         responsefromServer = bytes()
+        print("waiting")
         responseData = clientSocket.recv(1024)
+        print("done")
         responsefromServer += responseData
-        while len(responseData) == 1024:
+        while len(responseData) > 0:
+            print("waiting")
             responseData = clientSocket.recv(1024)
+            print("done")
             responsefromServer += responseData
         
         # altering content
@@ -144,7 +148,7 @@ class Proxy:
 
 def SmileyImgToTrollyImg(response: Response):
     if response.getHeader("Content-Type").startswith("text/html"):
-        response.data = response.data.replace("http://zebroid.ida.liu.se/fakenews/smiley.jpg", "http://zebroid.ida.liu.se/fakenews/trolly.jpg")
+        response.data = response.data.replace("/smiley.jpg", "/trolly.jpg")
 
 def SmileyToTrolly(response: Response):
     if response.getHeader("Content-Type").startswith("text/html") or response.getHeader("Content-Type").startswith("text/plain"):
@@ -155,5 +159,5 @@ def StockholmToLinkoping(response: Response):
         response.data = response.data.replace("Stockholm", "Linköping")
 
 if __name__ == "__main__":
-    proxy = Proxy(8080)
+    proxy = Proxy(8081)
     proxy.listen()
