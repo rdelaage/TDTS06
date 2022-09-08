@@ -40,8 +40,10 @@ class Response:
         response = data.decode('utf-8')
         splittedResponse = response.split('\r\n')
 
-        responseLine = splittedResponse[0]
+        responseLine = splittedResponse[0].split()
         splittedResponse = splittedResponse[1:]
+        self.statusCode = responseLine[1]
+        self.statusPhrase = responseLine[2]
 
         while splittedResponse[0] != "":
             headerLine = splittedResponse[0]
