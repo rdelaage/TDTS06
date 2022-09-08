@@ -31,10 +31,29 @@ class Request:
 
 class Response:
     def __init__(self):
-        pass
+        self.statusCode = 200
+        self.statusPhrase = "OK"
+        self.headers = {}
+        self.data = ""
 
     def fromBytes(self, data: bytes):
-        pass
+        response = data.decode('utf-8')
+        splittedResponse = response.split('\r\n')
+
+        responseLine = splittedResponse[0]
+        splittedResponse = splittedResponse[1:]
+
+        while splittedResponse[0] != "":
+            headerLine = splittedResponse[0]
+            key = headerLine.split(':')[0]
+            value = headerLine.split(':')[1].strip()
+            self.headers[key] = value
+            splittedResponse = splittedResponse[1:]
+
+        self.data = "\r\n".join(splittedResponse[1:])
+
+    def applyMiddleware(self, function):
+        function(self)
 
     def toBytes(self) -> bytes:
         pass
@@ -67,7 +86,7 @@ class Proxy:
         client.send(bytes(answer, 'utf-8'))
         client.close()
 
-    def handleServer(self, request: Request):
+    def handleServer(self, request: Request) -> Response:
         # sending request to Server
         clientSocket = socket.connect(request.getHeader("Host"))
         requestBytes = request.toBytes()
@@ -85,8 +104,26 @@ class Proxy:
             responsefromServer += responseData
         
         # altering content
-        pass
+        responseObject = Response()
+        responseObject.fromBytes(responsefromServer)
 
+        responseObject.applyMiddleware(SmileyImgToTrollyImg)
+        responseObject.applyMiddleware(SmileyToTrolly)
+        responseObject.applyMiddleware(StockholmToLinkoping)
+
+        return responseObject
+
+def SmileyImgToTrollyImg(response: Response):
+    if response.getHeader("Content-Type") == "text/html":
+        response.data.replace("http://zebroid.ida.liu.se/fakenews/smiley.jpg", "http://zebroid.ida.liu.se/fakenews/trolly.jpg")
+
+def SmileyToTrolly(response: Response):
+    if response.getHeader("Content-Type") == "text/html" or response.getHeader("Content-Type") == "text/plain":
+        response.data.replace("Smiley", "Trolly")
+
+def StockholmToLinkoping(response: Response):
+    if response.getHeader("Content-Type") == "text/html" or response.getHeader("Content-Type") == "text/plain":
+        response.data.replace("Stockholm", "Linköping")
 
 if __name__ == "__main__":
     proxy = Proxy(8081)
