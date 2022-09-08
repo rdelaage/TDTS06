@@ -4,7 +4,7 @@ class Request:
     def __init__(self):
         self.verb = 'GET'
         self.path = '/'
-        self.headers = map()
+        self.headers = {}
         self.data = ''
 
     def fromBytes(self, data: bytes):
@@ -19,7 +19,7 @@ class Request:
         while splittedRequest[0] != "":
             headerLine = splittedRequest[0]
             key = headerLine.split(':')[0]
-            value = headerLine.split(':')[1].strip()
+            value = ":".join(headerLine.split(':')[1:]).strip()
             self.headers[key] = value
             splittedRequest = splittedRequest[1:]
 
@@ -72,8 +72,15 @@ class Response:
     def applyMiddleware(self, function):
         function(self)
 
+    def getHeader(self, header: str) -> str:
+        return self.headers[header]
+
     def toBytes(self) -> bytes:
-        pass
+        headers = ''
+        for header, value in self.headers.items():
+            headers += f"{header}: {value}\r\n"
+        response = f"HTTP/1.1 {self.statusCode} {self.statusPhrase}\r\n{headers}\r\n{self.data}"
+        return bytes(response, 'utf-8')
 
 class Proxy:
     def __init__(self, listeningPort: int):
@@ -98,14 +105,17 @@ class Proxy:
         while len(data) == 1024:
             data = client.recv(1024)
             request += data
-        print(request)
-        answer = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nHi!"
-        client.send(bytes(answer, 'utf-8'))
+        parsedRequest = Request()
+        parsedRequest.fromBytes(request)
+        response = self.handleServer(parsedRequest)
+        client.send(response.toBytes())
         client.close()
 
     def handleServer(self, request: Request) -> Response:
         # sending request to Server
-        clientSocket = socket.connect(request.getHeader("Host"))
+        clientSocket = socket.socket()
+        host = request.getHeader("Host")
+        clientSocket.connect((host, 80))
         requestBytes = request.toBytes()
         lenSendtoServer = clientSocket.send(requestBytes)
         while lenSendtoServer < len(requestBytes):
