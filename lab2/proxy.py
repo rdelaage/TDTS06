@@ -7,24 +7,27 @@ class Request:
         self.headers = {}
         self.data = ''
 
-    def fromBytes(self, data: bytes):
-        request = data.decode('utf-8')
-        splittedRequest = request.split('\r\n')
+    # decoding information from byte type of request
+    # question #1. Is the request data always string, not including byte type? -> check decode('utf-8') one more time 
+    def decodeFromBytes(self, byteData:bytes):
+        decodedData = byteData.decode('utf-8', 'ignore')
+        splittedData = decodedData.split('\r\n')
 
-        requestLine = splittedRequest[0].split()
-        splittedRequest = splittedRequest[1:]
+        requestLine = splittedData[0].split()
+
         self.verb = requestLine[0]
         self.path = requestLine[1]
 
-        while splittedRequest[0] != "":
-            headerLine = splittedRequest[0]
-            key = headerLine.split(':')[0]
-            value = ":".join(headerLine.split(':')[1:]).strip()
+        splittedData = splittedData[1:]
+
+        while splittedData[0] != "":
+            headerLine = splittedData[0].split(':', 1)
+            key = headerLine[0]
+            value = headerLine[1].strip()
             self.headers[key] = value
-            splittedRequest = splittedRequest[1:]
+            splittedData = splittedData[1:]
 
-        self.data = "\r\n".join(splittedRequest[1:])
-
+        self.data = "\r\n".join(splittedData[1:])
     def setVerb(self, verb: str):
         self.verb = verb
 
@@ -37,7 +40,8 @@ class Request:
     def getHeader(self, header:str) -> str:
         return self.headers[header]
 
-    def toBytes(self) -> bytes:
+    # encoding request to byte type
+    def encodeToBytes(self) -> bytes:
         headers = ''
         for header, value in self.headers.items():
             headers += f"{header}: {value}\r\n"
@@ -51,23 +55,45 @@ class Response:
         self.headers = {}
         self.data = ""
 
-    def fromBytes(self, data: bytes):
-        response = data.decode('utf-8')
-        splittedResponse = response.split('\r\n')
+    # decoding information from byte type of response
+    def decodeFromBytes(self, byteData:bytes):
+        decodedData = byteData.decode('utf-8', 'ignore')
+        splittedData = decodedData.split('\r\n')
 
-        responseLine = splittedResponse[0].split()
-        splittedResponse = splittedResponse[1:]
+        responseLine = splittedData[0].split()
+
         self.statusCode = responseLine[1]
         self.statusPhrase = responseLine[2]
 
-        while splittedResponse[0] != "":
-            headerLine = splittedResponse[0]
-            key = headerLine.split(':')[0]
-            value = headerLine.split(':')[1].strip()
-            self.headers[key] = value
-            splittedResponse = splittedResponse[1:]
+        splittedData = splittedData[1:]
 
-        self.data = "\r\n".join(splittedResponse[1:])
+        while splittedData[0] != "":
+            headerLine = splittedData[0].split(":", 1)
+            key = headerLine[0]
+            value = headerLine[1].strip()
+            self.headers[key] = value
+            splittedData = splittedData[1:]
+
+        # if content-type is image, it needs to be byte data
+        if "Content-Type" in self.headers and self.headers["Content-Type"].startswith("image"):
+            splittedByteData = byteData.split(b'\r\n')
+            self.data =  splittedByteData[len(splittedByteData) - 1]
+        else : 
+            self.data = "\r\n".join(splittedData[1:])
+
+    # encoding response to byte type
+    def encodeToBytes(self) -> bytes:
+        headers = ''
+        for header, value in self.headers.items():
+            headers += f"{header}: {value}\r\n"
+        
+        # if content-type is image(byte type), it doesn't need to be encoded to byte type
+        if "Content-Type" in self.headers and self.headers["Content-Type"].startswith("image"):
+            request = f"HTTP/1.1 {self.statusCode} {self.statusPhrase}\r\n{headers}\r\n"
+            return bytes(request, 'utf-8') + self.data
+        else:
+            request = f"HTTP/1.1 {self.statusCode} {self.statusPhrase}\r\n{headers}\r\n{self.data}"
+            return bytes(request, 'utf-8')
 
     def applyMiddleware(self, function):
         function(self)
@@ -75,89 +101,110 @@ class Response:
     def getHeader(self, header: str) -> str:
         return self.headers[header]
 
-    def toBytes(self) -> bytes:
-        headers = ''
-        for header, value in self.headers.items():
-            headers += f"{header}: {value}\r\n"
-        response = f"HTTP/1.1 {self.statusCode} {self.statusPhrase}\r\n{headers}\r\n{self.data}"
-        return bytes(response, 'utf-8')
+# middleware functions for altering content of response
+def modifyStockholmToLinkoping(response:Response):
+    if not ("Content-Type" in response.headers and response.getHeader("Content-Type").startswith("image")) :
+        response.data = response.data.replace("Stockholm", "Linköping")
+        response.data = response.data.replace("/Linköping", "/Stockholm")
 
-class Proxy:
-    def __init__(self, listeningPort: int):
-        self.socket = socket.socket()
-        self.socket.bind(('localhost', listeningPort))
-
-    def listen(self):
-        self.socket.listen()
-        try:
-            while True:
-                (client, address) = self.socket.accept()
-                print(f"Connected by {address}")
-                self.handleClient(client)
-        except KeyboardInterrupt:
-            self.socket.close()
-            print("The proxy is closed")
-
-    def handleClient(self, client: socket):
-        request = bytes()
-        data = client.recv(1024)
-        request += data
-        while len(data) == 1024:
-            data = client.recv(1024)
-            request += data
-        parsedRequest = Request()
-        parsedRequest.fromBytes(request)
-        responseBytes = self.handleServer(parsedRequest).toBytes()
-        lenSendToClient = client.send(responseBytes)
-        while lenSendToClient < len(responseBytes):
-            lenSendToClient += client.send(responseBytes[lenSendToClient:])
-        client.close()
-
-    def handleServer(self, request: Request) -> Response:
-        # sending request to Server
-        clientSocket = socket.socket()
-        host = request.getHeader("Host")
-        clientSocket.connect((host, 80))
-        requestBytes = request.toBytes()
-        lenSendtoServer = clientSocket.send(requestBytes)
-        while lenSendtoServer < len(requestBytes):
-            requestBytes = requestBytes[lenSendtoServer:]
-            lenSendtoServer = clientSocket.send(requestBytes)
-
-        # receiving response from Server
-        responsefromServer = bytes()
-        print("waiting")
-        responseData = clientSocket.recv(1024)
-        print("done")
-        responsefromServer += responseData
-        while len(responseData) > 0:
-            print("waiting")
-            responseData = clientSocket.recv(1024)
-            print("done")
-            responsefromServer += responseData
-        
-        # altering content
-        responseObject = Response()
-        responseObject.fromBytes(responsefromServer)
-
-        responseObject.applyMiddleware(SmileyImgToTrollyImg)
-        responseObject.applyMiddleware(SmileyToTrolly)
-        responseObject.applyMiddleware(StockholmToLinkoping)
-
-        return responseObject
-
-def SmileyImgToTrollyImg(response: Response):
-    if response.getHeader("Content-Type").startswith("text/html"):
-        response.data = response.data.replace("/smiley.jpg", "/trolly.jpg")
-
-def SmileyToTrolly(response: Response):
-    if response.getHeader("Content-Type").startswith("text/html") or response.getHeader("Content-Type").startswith("text/plain"):
+def modifySmileyToTrolly(response:Response):
+    if not ("Content-Type" in response.headers and response.getHeader("Content-Type").startswith("image")):
         response.data = response.data.replace("Smiley", "Trolly")
 
-def StockholmToLinkoping(response: Response):
-    if response.getHeader("Content-Type").startswith("text/html") or response.getHeader("Content-Type").startswith("text/plain"):
-        response.data = response.data.replace("Stockholm", "Linköping")
+def modifySmileyImgToTrollyImg(response:Response):
+    if not ("Content-Type" in response.headers and response.getHeader("Content-Type").startswith("image")):
+        response.data = response.data.replace("smiley", "trolly")
+
+class Proxy:
+    def __init__(self, port:int):
+        self.port = port
+
+    def listen(self):
+        # creating server part socket 
+        serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # binding server part socket to client
+        serverSocket.bind(('localhost', self.port))
+
+        # listening request from client
+        serverSocket.listen()
+
+        try:
+            while True:
+                # accepting request from client and creating new request socket
+                (client, address) = serverSocket.accept()
+                print(f"Connected by {address}")
+
+                self.handleServerPart(client)
+
+        except KeyboardInterrupt:
+            serverSocket.close()
+            print("The proxy is closed")
+
+    def handleServerPart(self, requestSocket:socket):
+        # receiving request from client
+        # question #2. Does the amount of receiving data affecting to the speed of receiving? -> check 1024, 4096, ..
+        request = Request()
+        receivedData = requestSocket.recv(1024)  
+        requestData = receivedData
+
+        while len(receivedData) == 1024:
+            receivedData = requestSocket.recv(1024)
+            requestData += receivedData
+
+        # Ignore request having no data
+        if len(requestData) == 0:
+            requestSocket.close()
+            return 
+
+        request.decodeFromBytes(requestData)
+
+        response = self.handleClientPart(request)
+        responseBytes = response.encodeToBytes()
+
+        # sending response to client 
+        sendData = requestSocket.send(responseBytes)
+
+        while sendData < len(responseBytes):
+            responseBytes = responseBytes[sendData:]
+            sendData = requestSocket.send(responseBytes)
+        
+        requestSocket.close()
+        
+    def handleClientPart(self, request:Request) -> Response:
+        # creating client part socket 
+        clientSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # connecting client part socket to http server
+        clientSocket.connect((request.getHeader("Host"), 80))
+
+        # sending request to http server
+        requestBytes = request.encodeToBytes()
+        sendingRequest = clientSocket.send(requestBytes)
+
+        # receiving response from http server
+        response = Response()
+        receivedResponse = clientSocket.recv(1024)
+        responseData = receivedResponse
+
+        while len(receivedResponse) > 0:
+            receivedResponse = clientSocket.recv(1024)
+            responseData += receivedResponse
+
+        response.decodeFromBytes(responseData)
+
+        # altering content of response
+        response.applyMiddleware(modifyStockholmToLinkoping)
+        response.applyMiddleware(modifySmileyToTrolly)
+        response.applyMiddleware(modifySmileyImgToTrollyImg)
+        
+        clientSocket.close()
+
+        return response
+    
+def main():
+  myProxy = Proxy(8080)
+  myProxy.listen()
 
 if __name__ == "__main__":
-    proxy = Proxy(8081)
-    proxy.listen()
+    main()
