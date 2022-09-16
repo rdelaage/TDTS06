@@ -1,0 +1,975 @@
+\documentclass[a4paper,11pt,final]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{geometry}
+
+\geometry{top=2cm,bottom=2cm,left=2cm,right=2cm}
+
+\title{Lab 1 - Wireshark}
+\author{Romain de Laage (romde686) \& Gyumin Park (gyupa395)\\Group A}
+\date{\today}
+
+\lstset{basicstyle=\footnotesize\ttfamily}
+
+\begin{document}
+\maketitle
+\chapter{Questions 1 to 7}
+
+HTTP packets as plain text for these questions:
+\begin{lstlisting}[breaklines]
+No.     Time           Source                Destination           Protocol Length Info
+     29 24.063879140   192.168.8.248         128.119.245.12        HTTP     447    GET /wireshark-labs/HTTP-wireshark-file1.html HTTP/1.1 
+
+Frame 29: 447 bytes on wire (3576 bits), 447 bytes captured (3576 bits) on interface wlp1s0, id 0
+Ethernet II, Src: IntelCor_87:f0:e1 (e0:d4:64:87:f0:e1), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.248, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 50692, Dst Port: 80, Seq: 1, Ack: 1, Len: 381
+Hypertext Transfer Protocol
+    GET /wireshark-labs/HTTP-wireshark-file1.html HTTP/1.1\r\n
+        [Expert Info (Chat/Sequence): GET /wireshark-labs/HTTP-wireshark-file1.html HTTP/1.1\r\n]
+            [GET /wireshark-labs/HTTP-wireshark-file1.html HTTP/1.1\r\n]
+            [Severity level: Chat]
+            [Group: Sequence]
+        Request Method: GET
+        Request URI: /wireshark-labs/HTTP-wireshark-file1.html
+        Request Version: HTTP/1.1
+    Host: gaia.cs.umass.edu\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Upgrade-Insecure-Requests: 1\r\n
+    \r\n
+    [Full request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file1.html]
+    [HTTP request 1/1]
+    [Response in frame: 31]
+
+No.     Time           Source                Destination           Protocol Length Info
+     31 24.268743212   128.119.245.12        192.168.8.248         HTTP     552    HTTP/1.1 200 OK  (text/html)
+
+Frame 31: 552 bytes on wire (4416 bits), 552 bytes captured (4416 bits) on interface wlp1s0, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: IntelCor_87:f0:e1 (e0:d4:64:87:f0:e1)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.248
+Transmission Control Protocol, Src Port: 80, Dst Port: 50692, Seq: 1, Ack: 382, Len: 486
+Hypertext Transfer Protocol
+    HTTP/1.1 200 OK\r\n
+        [Expert Info (Chat/Sequence): HTTP/1.1 200 OK\r\n]
+            [HTTP/1.1 200 OK\r\n]
+            [Severity level: Chat]
+            [Group: Sequence]
+        Response Version: HTTP/1.1
+        Status Code: 200
+        [Status Code Description: OK]
+        Response Phrase: OK
+    Date: Thu, 01 Sep 2022 05:58:27 GMT\r\n
+    Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.30 mod_perl/2.0.11 Perl/v5.16.3\r\n
+    Last-Modified: Thu, 01 Sep 2022 05:58:01 GMT\r\n
+    ETag: "80-5e7974bd03ec5"\r\n
+    Accept-Ranges: bytes\r\n
+    Content-Length: 128\r\n
+    Keep-Alive: timeout=5, max=100\r\n
+    Connection: Keep-Alive\r\n
+    Content-Type: text/html; charset=UTF-8\r\n
+    \r\n
+    [HTTP response 1/1]
+    [Time since request: 0.204864072 seconds]
+    [Request in frame: 29]
+    [Request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file1.html]
+    File Data: 128 bytes
+Line-based text data: text/html (4 lines)
+\end{lstlisting}
+
+\begin{enumerate}
+\item The web browser is running HTTP version 1.1, we can see that at the end of the request line. The Server is also running HTTP 1.1, we can see that at the beginning of the response line. 
+\item We can see the accepted languages by looking at the \texttt{Accept-Language} header in the request message, here we see \texttt{Accept-Language: en-US,en;q=0.5}that is meaning that the browser can accept content written in english with a Quality values of 0.5. The browser also privide a \texttt{User-Agent} header indicating the software used to make the request, a \texttt{Accept} header containing a list of accepted mime type and a \texttt{Accept-Encoding} header containing a list of supported encoding (compression) supported.
+\item We can see the IP address of each host in the packet information. For example, for the first packet we have \texttt{Internet Protocol Version 4, Src: 192.168.8.248, Dst: 128.119.245.12} meaning that the source has the IP address 192.168.8.248 (a private IP address, behind a NAT) this is the client here, and the destination (the server here) has the IP address \texttt{128.119.245.12}.
+\item The returned status code is 200, this is visible on the first line of the response message after the used version of HTTP \texttt{HTTP/1.1 200 OK}. It means that the response from server to the GET request is successful without any problem.
+\item The document was last modified on Thursday, 01 September 2022 at 05:58:01 GMT, we can see that in the \texttt{Last-Modified} header of the response message
+\item 128 Bytes are returned to the browser, this is visible in the \texttt{Content-Length} header.
+\item There is no other header in the raw data that is not displayed in the listening window.
+\end{enumerate}
+
+We saw here how a simple HTTP request and response works. We can see the concept of encapsulation (HTTP encapsuled in TCP which is encapsuled in IP which is encapsuled in Ethernet) and the purpose of each layer (ethernet to physically link two devices, IP to route the packet to the destination host and TCP to control the communication). We understand the goal of the HTTP headers, to exchange information about the client (user agent, accepted languages, ...), the server (\texttt{Server} header), how to communicate (\texttt{Upgrade-Insecure-Requests} and \texttt{Connection} headers) and metadata about the returned document (\texttt{Content-Type}, \texttt{Last-Modified} and \texttt{Content-Length} headers). We can also see the standard port of an HTTP server and the port used by the client for the communication in the TCP header \texttt{Transmission Control Protocol, Src Port: 50692, Dst Port: 80, Seq: 1, Ack: 1, Len: 381}, here 80 and 50692 respectively. Moreover TCP headers contain information about the sequence number of the segment and the length of the data.
+
+\chapter{Questions 8 - 11}
+
+HTTP packets as plain text for these questions:
+\begin{lstlisting}[breaklines]
+No.     Time           Source                Destination           Protocol Length Info
+     14 1.702635865    192.168.8.141         128.119.245.12        HTTP     447    GET /wireshark-labs/HTTP-wireshark-file2.html HTTP/1.1 
+
+Frame 14: 447 bytes on wire (3576 bits), 447 bytes captured (3576 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 51416, Dst Port: 80, Seq: 1, Ack: 1, Len: 381
+Hypertext Transfer Protocol
+    GET /wireshark-labs/HTTP-wireshark-file2.html HTTP/1.1\r\n
+    Host: gaia.cs.umass.edu\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Upgrade-Insecure-Requests: 1\r\n
+    \r\n
+    [Full request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file2.html]
+    [HTTP request 1/2]
+    [Response in frame: 16]
+    [Next request in frame: 21]
+
+No.     Time           Source                Destination           Protocol Length Info
+     16 1.815049359    128.119.245.12        192.168.8.141         HTTP     796    HTTP/1.1 200 OK  (text/html)
+
+Frame 16: 796 bytes on wire (6368 bits), 796 bytes captured (6368 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 51416, Seq: 1, Ack: 382, Len: 730
+Hypertext Transfer Protocol
+    HTTP/1.1 200 OK\r\n
+    Date: Thu, 01 Sep 2022 09:27:38 GMT\r\n
+    Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.30 mod_perl/2.0.11 Perl/v5.16.3\r\n
+    Last-Modified: Thu, 01 Sep 2022 05:59:01 GMT\r\n
+    ETag: "173-5e7974f68c999"\r\n
+    Accept-Ranges: bytes\r\n
+    Content-Length: 371\r\n
+    Keep-Alive: timeout=5, max=100\r\n
+    Connection: Keep-Alive\r\n
+    Content-Type: text/html; charset=UTF-8\r\n
+    \r\n
+    [HTTP response 1/2]
+    [Time since request: 0.112413494 seconds]
+    [Request in frame: 14]
+    [Next request in frame: 21]
+    [Next response in frame: 22]
+    [Request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file2.html]
+    File Data: 371 bytes
+Line-based text data: text/html (10 lines)
+    \n
+    <html>\n
+    \n
+    Congratulations again!  Now you've downloaded the file lab2-2.html. <br>\n
+    This file's last modification date will not change.  <p>\n
+    Thus  if you download this multiple times on your browser, a complete copy <br>\n
+    will only be sent once by the server due to the inclusion of the IN-MODIFIED-SINCE<br>\n
+    field in your browser's HTTP GET request to the server.\n
+    \n
+    </html>\n
+
+No.     Time           Source                Destination           Protocol Length Info
+     21 3.706367869    192.168.8.141         128.119.245.12        HTTP     533    GET /wireshark-labs/HTTP-wireshark-file2.html HTTP/1.1 
+
+Frame 21: 533 bytes on wire (4264 bits), 533 bytes captured (4264 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 51416, Dst Port: 80, Seq: 382, Ack: 731, Len: 467
+Hypertext Transfer Protocol
+    GET /wireshark-labs/HTTP-wireshark-file2.html HTTP/1.1\r\n
+    Host: gaia.cs.umass.edu\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Upgrade-Insecure-Requests: 1\r\n
+    If-Modified-Since: Thu, 01 Sep 2022 05:59:01 GMT\r\n
+    If-None-Match: "173-5e7974f68c999"\r\n
+    \r\n
+    [Full request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file2.html]
+    [HTTP request 2/2]
+    [Prev request in frame: 14]
+    [Response in frame: 22]
+
+No.     Time           Source                Destination           Protocol Length Info
+     22 3.817912871    128.119.245.12        192.168.8.141         HTTP     305    HTTP/1.1 304 Not Modified 
+
+Frame 22: 305 bytes on wire (2440 bits), 305 bytes captured (2440 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 51416, Seq: 731, Ack: 849, Len: 239
+Hypertext Transfer Protocol
+    HTTP/1.1 304 Not Modified\r\n
+    Date: Thu, 01 Sep 2022 09:27:40 GMT\r\n
+    Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.30 mod_perl/2.0.11 Perl/v5.16.3\r\n
+    Connection: Keep-Alive\r\n
+    Keep-Alive: timeout=5, max=99\r\n
+    ETag: "173-5e7974f68c999"\r\n
+    \r\n
+    [HTTP response 2/2]
+    [Time since request: 0.111545002 seconds]
+    [Prev request in frame: 14]
+    [Prev response in frame: 16]
+    [Request in frame: 21]
+    [Request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file2.html]
+\end{lstlisting}
+
+\begin{enumerate}
+\setcounter{enumi}{7}
+\item We look at the first request headers in the request message, there is no header \texttt{If-Modified-Since}.
+\item For this first request, the server returned explicitely the content of the file, we have the text after the headers.
+\item We have a \texttt{If-Modified-Since} header in the second request, the value of this header is \texttt{Thu, 01 Sep 2022 05:59:01 GMT} it corresponds to the \texttt{Last-Modified} header of the first response.
+\item The returned HTTP status code is 304 and the phrase is \texttt{Not Modified}, this means the content was not modified since the last fetch. The server did not returned the content explicitely, instead the browser display the cached version of the content since it was not modified.
+\end{enumerate}
+
+This experimentation shows us the cache mecanism of HTTP, we need to have a first fetch in order to cache the resource, then the browser can cache it associated to the \texttt{Last-Modified} date given in the response order and for the future requests, the browser can add a \texttt{If-Modified-Since} header with this date to indicate to the server that this version of the resource is cached and there is no need to send it again. The return status will be 304 and not 200 when the browser must use the cached version. This mecanism avoid to transfer a whole document when this is not necessary, this is an optimization.
+
+\chapter{Questions 12 - 15}
+
+TCP packets as plain text for these questions:
+\begin{lstlisting}[breaklines]
+No.     Time           Source                Destination           Protocol Length Info
+     19 1.319771153    192.168.8.141         128.119.245.12        TCP      74     49492 → 80 [SYN] Seq=0 Win=64240 Len=0 MSS=1460 SACK_PERM=1 TSval=305505307 TSecr=0 WS=128
+
+Frame 19: 74 bytes on wire (592 bits), 74 bytes captured (592 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 49492, Dst Port: 80, Seq: 0, Len: 0
+
+No.     Time           Source                Destination           Protocol Length Info
+     22 1.426177560    128.119.245.12        192.168.8.141         TCP      74     80 → 49492 [SYN, ACK] Seq=0 Ack=1 Win=28960 Len=0 MSS=1460 SACK_PERM=1 TSval=105832325 TSecr=305505307 WS=128
+
+Frame 22: 74 bytes on wire (592 bits), 74 bytes captured (592 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 49492, Seq: 0, Ack: 1, Len: 0
+
+No.     Time           Source                Destination           Protocol Length Info
+     23 1.426270590    192.168.8.141         128.119.245.12        TCP      66     49492 → 80 [ACK] Seq=1 Ack=1 Win=64256 Len=0 TSval=305505414 TSecr=105832325
+
+Frame 23: 66 bytes on wire (528 bits), 66 bytes captured (528 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 49492, Dst Port: 80, Seq: 1, Ack: 1, Len: 0
+
+No.     Time           Source                Destination           Protocol Length Info
+     24 1.426624971    192.168.8.141         128.119.245.12        HTTP     447    GET /wireshark-labs/HTTP-wireshark-file3.html HTTP/1.1 
+
+Frame 24: 447 bytes on wire (3576 bits), 447 bytes captured (3576 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 49492, Dst Port: 80, Seq: 1, Ack: 1, Len: 381
+Hypertext Transfer Protocol
+    GET /wireshark-labs/HTTP-wireshark-file3.html HTTP/1.1\r\n
+    Host: gaia.cs.umass.edu\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Upgrade-Insecure-Requests: 1\r\n
+    \r\n
+    [Full request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file3.html]
+    [HTTP request 1/1]
+    [Response in frame: 28]
+
+No.     Time           Source                Destination           Protocol Length Info
+     25 1.532125730    128.119.245.12        192.168.8.141         TCP      66     80 → 49492 [ACK] Seq=1 Ack=382 Win=30080 Len=0 TSval=105832431 TSecr=305505414
+
+Frame 25: 66 bytes on wire (528 bits), 66 bytes captured (528 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 49492, Seq: 1, Ack: 382, Len: 0
+
+No.     Time           Source                Destination           Protocol Length Info
+     26 1.532508816    128.119.245.12        192.168.8.141         TCP      4410   80 → 49492 [ACK] Seq=1 Ack=382 Win=30080 Len=4344 TSval=105832432 TSecr=305505414 [TCP segment of a reassembled PDU]
+
+Frame 26: 4410 bytes on wire (35280 bits), 4410 bytes captured (35280 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 49492, Seq: 1, Ack: 382, Len: 4344
+
+No.     Time           Source                Destination           Protocol Length Info
+     27 1.532579008    192.168.8.141         128.119.245.12        TCP      66     49492 → 80 [ACK] Seq=382 Ack=4345 Win=62592 Len=0 TSval=305505520 TSecr=105832432
+
+Frame 27: 66 bytes on wire (528 bits), 66 bytes captured (528 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 49492, Dst Port: 80, Seq: 382, Ack: 4345, Len: 0
+
+No.     Time           Source                Destination           Protocol Length Info
+     28 1.532618539    128.119.245.12        192.168.8.141         HTTP     583    HTTP/1.1 200 OK  (text/html)
+
+Frame 28: 583 bytes on wire (4664 bits), 583 bytes captured (4664 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 49492, Seq: 4345, Ack: 382, Len: 517
+[2 Reassembled TCP Segments (4861 bytes): #26(4344), #28(517)]
+    [Frame: 26, payload: 0-4343 (4344 bytes)]
+    [Frame: 28, payload: 4344-4860 (517 bytes)]
+    [Segment count: 2]
+    [Reassembled TCP length: 4861]
+    [Reassembled TCP Data: 485454502f312e3120323030204f4b0d0a446174653a205468752c203031205365702032…]
+Hypertext Transfer Protocol
+    HTTP/1.1 200 OK\r\n
+    Date: Thu, 01 Sep 2022 09:28:55 GMT\r\n
+    Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.30 mod_perl/2.0.11 Perl/v5.16.3\r\n
+    Last-Modified: Thu, 01 Sep 2022 05:59:01 GMT\r\n
+    ETag: "1194-5e7974f687b78"\r\n
+    Accept-Ranges: bytes\r\n
+    Content-Length: 4500\r\n
+    Keep-Alive: timeout=5, max=100\r\n
+    Connection: Keep-Alive\r\n
+    Content-Type: text/html; charset=UTF-8\r\n
+    \r\n
+    [HTTP response 1/1]
+    [Time since request: 0.105993568 seconds]
+    [Request in frame: 24]
+    [Request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file3.html]
+    File Data: 4500 bytes
+Line-based text data: text/html (98 lines)
+    <html><head> \n
+    <title>Historical Documents:THE BILL OF RIGHTS</title></head>\n
+    \n
+    \n
+    <body bgcolor="#ffffff" link="#330000" vlink="#666633">\n
+    <p><br>\n
+    </p>\n
+    <p></p><center><b>THE BILL OF RIGHTS</b><br>\n
+      <em>Amendments 1-10 of the Constitution</em>\n
+    </center>\n
+    \n
+    <p>The Conventions of a number of the States having, at the time of adopting\n
+    the Constitution, expressed a desire, in order to prevent misconstruction\n
+    or abuse of its powers, that further declaratory and restrictive clauses\n
+    should be added, and as extending the ground of public confidence in the\n
+    Government will best insure the beneficent ends of its institution; </p><p>  Resolved, by the Senate and House of Representatives of the United\n
+    States of America, in Congress assembled, two-thirds of both Houses concurring,\n
+    that the following articles be proposed to the Legislatures of the several\n
+    States, as amendments to the Constitution of the United States; all or any\n
+    of which articles, when ratified by three-fourths of the said Legislatures,\n
+    to be valid to all intents and purposes as part of the said Constitution,\n
+    namely:    </p><p><a name="1"><strong><h3>Amendment I</h3></strong></a>\n
+    \n
+    <p></p><p>Congress shall make no law respecting an establishment of\n
+    religion, or prohibiting the free exercise thereof; or\n
+    abridging the freedom of speech, or of the press; or the\n
+    right of the people peaceably to assemble, and to petition\n
+    the government for a redress of grievances.\n
+    \n
+    </p><p><a name="2"><strong><h3>Amendment II</h3></strong></a>\n
+    \n
+    <p></p><p>A well regulated militia, being necessary to the security\n
+    of a free state, the right of the people to keep and bear\n
+    arms, shall not be infringed.\n
+    \n
+    </p><p><a name="3"><strong><h3>Amendment III</h3></strong></a>\n
+    \n
+    <p></p><p>No soldier shall, in time of peace be quartered in any house,\n
+    without the consent of the owner, nor in time of war, but\n
+    in a manner to be prescribed by law.\n
+    \n
+    </p><p><a name="4"><strong><h3>Amendment IV</h3></strong></a>\n
+    \n
+    <p></p><p>The right of the people to be secure in their persons, houses,\n
+    papers, and effects, against unreasonable searches and seizures,\n
+    shall not be violated, and no warrants shall issue, but upon\n
+    probable cause, supported by oath or affirmation, and\n
+    particularly describing the place to be searched, and the\n
+    persons or things to be seized.\n
+    \n
+    </p><p><a name="5"><strong><h3>Amendment V</h3></strong></a>\n
+    \n
+    <p></p><p>No person shall be held to answer for a capital, or otherwise\n
+    infamous crime, unless on a presentment or indictment of a grand\n
+    jury, except in cases arising in the land or naval forces,\n
+    or in the militia, when in actual service in time of war\n
+    or public danger; nor shall any person be subject for the\n
+    same offense to be twice put in jeopardy of life or limb;\n
+    nor shall be compelled in any criminal case to be a witness\n
+    against himself, nor be deprived of life, liberty, or property,\n
+    without due process of law; nor shall private property be\n
+    taken for public use, without just compensation.\n
+    \n
+    </p><p><a name="6"><strong><h3>Amendment VI</h3></strong></a>\n
+    \n
+    <p></p><p>In all criminal prosecutions, the accused shall enjoy the right\n
+    to a speedy and public trial, by an impartial jury of the state\n
+    and district wherein the crime shall have been committed, which\n
+    district shall have been previously ascertained by law, and\n
+    to be informed of the nature and cause of the accusation;\n
+    to be confronted with the witnesses against him; to have\n
+    compulsory process for obtaining witnesses in his favor,\n
+    and to have the assistance of counsel for his defense.\n
+    \n
+    </p><p><a name="7"><strong><h3>Amendment VII</h3></strong></a>\n
+    \n
+    <p></p><p>In suits at common law, where the value in controversy shall\n
+    exceed twenty dollars, the right of trial by jury shall be\n
+    preserved, and no fact tried by a jury, shall be otherwise\n
+    reexamined in any court of the United States, than according\n
+    to the rules of the common law.\n
+    \n
+    </p><p><a name="8"><strong><h3>Amendment VIII</h3></strong></a>\n
+    \n
+    <p></p><p>Excessive bail shall not be required, nor excessive fines\n
+    imposed, nor cruel and unusual punishments inflicted.\n
+    \n
+    </p><p><a name="9"><strong><h3>Amendment IX</h3></strong></a>\n
+    \n
+    <p></p><p>The enumeration in the Constitution, of certain rights, shall\n
+    not be construed to deny or disparage others retained by the people.\n
+    \n
+    </p><p><a name="10"><strong><h3>Amendment X</h3></strong></a>\n
+    \n
+    <p></p>\n
+    <p>The powers not delegated to the United States by the Constitution, nor prohibited \n
+      by it to the states, are reserved to the states respectively, or to the people.</p>\n
+    </body></html>
+
+No.     Time           Source                Destination           Protocol Length Info
+     29 1.532624336    192.168.8.141         128.119.245.12        TCP      66     49492 → 80 [ACK] Seq=382 Ack=4862 Win=62080 Len=0 TSval=305505520 TSecr=105832432
+
+Frame 29: 66 bytes on wire (528 bits), 66 bytes captured (528 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 49492, Dst Port: 80, Seq: 382, Ack: 4862, Len: 0
+\end{lstlisting}
+
+\begin{enumerate}
+\setcounter{enumi}{11}
+\item There is only one GET request, the packet number 24 contains this request message.
+\item The packet number 26 contains the status code and phrase of the response, the status code returned is 200 and the phrase OK.
+\item 2 TCP segments (26 and 28) were needed in order to receive the response.
+\item The HTTP headers were present only in the first TCP packet message, not in the second because HTTP headers, version, code and phrase are part of the HTTP protocole which is encapsuled in the TCP protocol, the segmentation is done by TCP only. The images below show the payload of each TCP packet.
+\end{enumerate}
+\includegraphics[width=\linewidth]{TCPPayload1}
+\includegraphics[width=\linewidth]{TCPPayload2}
+
+In this experimentation we see TCP segmentation in action. If data of response is too long to hold in just one TCP, TCP segmentation happens and TCP segmentations are transferred to client. HTTP doesn't matter about how the message will be transfered to the client. TCP is then able to assemble the entire message in the order as a single HTTP response.
+
+\chapter{Questions 16 - 17}
+
+HTTP packets as plain text for these questions:
+\begin{lstlisting}[breaklines]
+No.     Time           Source                Destination           Protocol Length Info
+     52 4.506124760    192.168.8.141         128.119.245.12        HTTP     490    GET /wireshark-labs/HTTP-wireshark-file4.html HTTP/1.1 
+
+Frame 52: 490 bytes on wire (3920 bits), 490 bytes captured (3920 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 57652, Dst Port: 80, Seq: 1, Ack: 1, Len: 424
+    Source Port: 57652
+    Destination Port: 80
+    [Stream index: 3]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 424]
+    Sequence Number: 1    (relative sequence number)
+    Sequence Number (raw): 257967034
+    [Next Sequence Number: 425    (relative sequence number)]
+    Acknowledgment Number: 1    (relative ack number)
+    Acknowledgment number (raw): 52457773
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 502
+    [Calculated window size: 64256]
+    [Window size scaling factor: 128]
+    Checksum: 0x4088 [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (424 bytes)
+Hypertext Transfer Protocol
+    GET /wireshark-labs/HTTP-wireshark-file4.html HTTP/1.1\r\n
+    Host: gaia.cs.umass.edu\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Upgrade-Insecure-Requests: 1\r\n
+    Pragma: no-cache\r\n
+    Cache-Control: no-cache\r\n
+    \r\n
+    [Full request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file4.html]
+    [HTTP request 1/3]
+    [Response in frame: 54]
+    [Next request in frame: 56]
+
+No.     Time           Source                Destination           Protocol Length Info
+     54 4.613072251    128.119.245.12        192.168.8.141         HTTP     1367   HTTP/1.1 200 OK  (text/html)
+
+Frame 54: 1367 bytes on wire (10936 bits), 1367 bytes captured (10936 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 57652, Seq: 1, Ack: 425, Len: 1301
+    Source Port: 80
+    Destination Port: 57652
+    [Stream index: 3]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 1301]
+    Sequence Number: 1    (relative sequence number)
+    Sequence Number (raw): 52457773
+    [Next Sequence Number: 1302    (relative sequence number)]
+    Acknowledgment Number: 425    (relative ack number)
+    Acknowledgment number (raw): 257967458
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 235
+    [Calculated window size: 30080]
+    [Window size scaling factor: 128]
+    Checksum: 0xddb4 [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (1301 bytes)
+Hypertext Transfer Protocol
+    HTTP/1.1 200 OK\r\n
+    Date: Thu, 01 Sep 2022 09:45:25 GMT\r\n
+    Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.30 mod_perl/2.0.11 Perl/v5.16.3\r\n
+    Last-Modified: Thu, 01 Sep 2022 05:59:01 GMT\r\n
+    ETag: "3ae-5e7974f68bde1"\r\n
+    Accept-Ranges: bytes\r\n
+    Content-Length: 942\r\n
+    Keep-Alive: timeout=5, max=100\r\n
+    Connection: Keep-Alive\r\n
+    Content-Type: text/html; charset=UTF-8\r\n
+    \r\n
+    [HTTP response 1/3]
+    [Time since request: 0.106947491 seconds]
+    [Request in frame: 52]
+    [Next request in frame: 56]
+    [Next response in frame: 68]
+    [Request URI: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file4.html]
+    File Data: 942 bytes
+Line-based text data: text/html (23 lines)
+    <html>\n
+    <head>\n
+    <title>Lab2-4 file: Embedded URLs</title>\n
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">\n
+    </head>\n
+    \n
+    <body bgcolor="#FFFFFF" text="#000000">\n
+    \n
+    <p>\n
+    <img src="http://gaia.cs.umass.edu/pearson.png" WIDTH="140" HEIGHT="82" > </p>\n
+    <p>This little HTML file is being served by gaia.cs.umass.edu. \n
+    It contains two embedded images. The image above, also served from the \n
+    gaia.cs.umass.edu web site, is the logo of our publisher, Pearson. \n
+    The image of our 8th edition book cover below is stored at, and served from,\n
+      a  WWW server kurose.cslash.net in France:</p>\n
+    <p align="left"><img src="http://kurose.cslash.net/8E_cover_small.jpg"\n
+    \t\t     width="168" height="220"></p>\n
+    And while we have your attention, you might want to take time to check out the\n
+    \t\t     available open resources for this book at\n
+    \t\t     <a href="http://gaia.cs.umass.edu/kurose_ross"> http://gaia.cs.umass.edu/kurose_ross</a>.\n
+    \n
+    </body>\n
+    </html>\n
+
+No.     Time           Source                Destination           Protocol Length Info
+     56 4.734589583    192.168.8.141         128.119.245.12        HTTP     447    GET /pearson.png HTTP/1.1 
+
+Frame 56: 447 bytes on wire (3576 bits), 447 bytes captured (3576 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 57652, Dst Port: 80, Seq: 425, Ack: 1302, Len: 381
+    Source Port: 57652
+    Destination Port: 80
+    [Stream index: 3]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 381]
+    Sequence Number: 425    (relative sequence number)
+    Sequence Number (raw): 257967458
+    [Next Sequence Number: 806    (relative sequence number)]
+    Acknowledgment Number: 1302    (relative ack number)
+    Acknowledgment number (raw): 52459074
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 501
+    [Calculated window size: 64128]
+    [Window size scaling factor: 128]
+    Checksum: 0x405d [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (381 bytes)
+Hypertext Transfer Protocol
+    GET /pearson.png HTTP/1.1\r\n
+    Host: gaia.cs.umass.edu\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: image/avif,image/webp,*/*\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Referer: http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file4.html\r\n
+    Pragma: no-cache\r\n
+    Cache-Control: no-cache\r\n
+    \r\n
+    [Full request URI: http://gaia.cs.umass.edu/pearson.png]
+    [HTTP request 2/3]
+    [Prev request in frame: 52]
+    [Response in frame: 68]
+    [Next request in frame: 83]
+
+No.     Time           Source                Destination           Protocol Length Info
+     64 4.776372011    192.168.8.141         178.79.137.164        HTTP     414    GET /8E_cover_small.jpg HTTP/1.1 
+
+Frame 64: 414 bytes on wire (3312 bits), 414 bytes captured (3312 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 178.79.137.164
+Transmission Control Protocol, Src Port: 49660, Dst Port: 80, Seq: 1, Ack: 1, Len: 348
+    Source Port: 49660
+    Destination Port: 80
+    [Stream index: 4]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 348]
+    Sequence Number: 1    (relative sequence number)
+    Sequence Number (raw): 1538926318
+    [Next Sequence Number: 349    (relative sequence number)]
+    Acknowledgment Number: 1    (relative ack number)
+    Acknowledgment number (raw): 1608836524
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 502
+    [Calculated window size: 64256]
+    [Window size scaling factor: 128]
+    Checksum: 0x06ac [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (348 bytes)
+Hypertext Transfer Protocol
+    GET /8E_cover_small.jpg HTTP/1.1\r\n
+    Host: kurose.cslash.net\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: image/avif,image/webp,*/*\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Referer: http://gaia.cs.umass.edu/\r\n
+    Pragma: no-cache\r\n
+    Cache-Control: no-cache\r\n
+    \r\n
+    [Full request URI: http://kurose.cslash.net/8E_cover_small.jpg]
+    [HTTP request 1/1]
+    [Response in frame: 66]
+
+No.     Time           Source                Destination           Protocol Length Info
+     66 4.813190873    178.79.137.164        192.168.8.141         HTTP     237    HTTP/1.1 301 Moved Permanently 
+
+Frame 66: 237 bytes on wire (1896 bits), 237 bytes captured (1896 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 178.79.137.164, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 49660, Seq: 1, Ack: 349, Len: 171
+    Source Port: 80
+    Destination Port: 49660
+    [Stream index: 4]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 171]
+    Sequence Number: 1    (relative sequence number)
+    Sequence Number (raw): 1608836524
+    [Next Sequence Number: 172    (relative sequence number)]
+    Acknowledgment Number: 349    (relative ack number)
+    Acknowledgment number (raw): 1538926666
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 507
+    [Calculated window size: 64896]
+    [Window size scaling factor: 128]
+    Checksum: 0x14bc [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (171 bytes)
+Hypertext Transfer Protocol
+    HTTP/1.1 301 Moved Permanently\r\n
+    Location: https://kurose.cslash.net/8E_cover_small.jpg\r\n
+    Content-Length: 0\r\n
+    Date: Thu, 01 Sep 2022 09:45:25 GMT\r\n
+    Server: lighttpd/1.4.47\r\n
+    \r\n
+    [HTTP response 1/1]
+    [Time since request: 0.036818862 seconds]
+    [Request in frame: 64]
+    [Request URI: http://kurose.cslash.net/8E_cover_small.jpg]
+
+No.     Time           Source                Destination           Protocol Length Info
+     68 4.841017725    128.119.245.12        192.168.8.141         HTTP     3677   HTTP/1.1 200 OK  (PNG)
+
+Frame 68: 3677 bytes on wire (29416 bits), 3677 bytes captured (29416 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 57652, Seq: 1302, Ack: 806, Len: 3611
+    Source Port: 80
+    Destination Port: 57652
+    [Stream index: 3]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 3611]
+    Sequence Number: 1302    (relative sequence number)
+    Sequence Number (raw): 52459074
+    [Next Sequence Number: 4913    (relative sequence number)]
+    Acknowledgment Number: 806    (relative ack number)
+    Acknowledgment number (raw): 257967839
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 243
+    [Calculated window size: 31104]
+    [Window size scaling factor: 128]
+    Checksum: 0x4cfb [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (3611 bytes)
+Hypertext Transfer Protocol
+    HTTP/1.1 200 OK\r\n
+    Date: Thu, 01 Sep 2022 09:45:25 GMT\r\n
+    Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.30 mod_perl/2.0.11 Perl/v5.16.3\r\n
+    Last-Modified: Sat, 06 Aug 2016 10:08:14 GMT\r\n
+    ETag: "cc3-539645c7f1ee7"\r\n
+    Accept-Ranges: bytes\r\n
+    Content-Length: 3267\r\n
+    Keep-Alive: timeout=5, max=99\r\n
+    Connection: Keep-Alive\r\n
+    Content-Type: image/png\r\n
+    \r\n
+    [HTTP response 2/3]
+    [Time since request: 0.106428142 seconds]
+    [Prev request in frame: 52]
+    [Prev response in frame: 54]
+    [Request in frame: 56]
+    [Next request in frame: 83]
+    [Next response in frame: 90]
+    [Request URI: http://gaia.cs.umass.edu/pearson.png]
+    File Data: 3267 bytes
+Portable Network Graphics
+\end{lstlisting}
+
+\begin{enumerate}
+\setcounter{enumi}{15}
+\item 3 GET requests were sent, two (52 and 56) were sent to the server 128.119.245.12 and one (64) to the server (178.79.137.164)
+\item The requests were made in parallel because the request for the second image was made before receiving the response for the first image request.
+\end{enumerate}
+
+In this experimentation we learn more about how a browser make different requests for a single web page with embedded media, the browser can download multiple media in parallel to optimize the time needed to display the page to the user, if the first server responds late the user doesn't need to wait before viewing the second image.
+
+\chapter{Questions 18 - 19}
+
+HTTP packets as plain text for these questions:
+\begin{lstlisting}[breaklines]
+No.     Time           Source                Destination           Protocol Length Info
+      9 3.081830462    192.168.8.141         128.119.245.12        HTTP     463    GET /wireshark-labs/protected_pages/HTTP-wireshark-file5.html HTTP/1.1 
+
+Frame 9: 463 bytes on wire (3704 bits), 463 bytes captured (3704 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 45898, Dst Port: 80, Seq: 1, Ack: 1, Len: 397
+    Source Port: 45898
+    Destination Port: 80
+    [Stream index: 1]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 397]
+    Sequence Number: 1    (relative sequence number)
+    Sequence Number (raw): 1629551698
+    [Next Sequence Number: 398    (relative sequence number)]
+    Acknowledgment Number: 1    (relative ack number)
+    Acknowledgment number (raw): 426352565
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 502
+    [Calculated window size: 64256]
+    [Window size scaling factor: 128]
+    Checksum: 0x406d [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (397 bytes)
+Hypertext Transfer Protocol
+    GET /wireshark-labs/protected_pages/HTTP-wireshark-file5.html HTTP/1.1\r\n
+    Host: gaia.cs.umass.edu\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Upgrade-Insecure-Requests: 1\r\n
+    \r\n
+    [Full request URI: http://gaia.cs.umass.edu/wireshark-labs/protected_pages/HTTP-wireshark-file5.html]
+    [HTTP request 1/1]
+    [Response in frame: 11]
+
+No.     Time           Source                Destination           Protocol Length Info
+     11 3.194896792    128.119.245.12        192.168.8.141         HTTP     783    HTTP/1.1 401 Unauthorized  (text/html)
+
+Frame 11: 783 bytes on wire (6264 bits), 783 bytes captured (6264 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 45898, Seq: 1, Ack: 398, Len: 717
+    Source Port: 80
+    Destination Port: 45898
+    [Stream index: 1]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 717]
+    Sequence Number: 1    (relative sequence number)
+    Sequence Number (raw): 426352565
+    [Next Sequence Number: 718    (relative sequence number)]
+    Acknowledgment Number: 398    (relative ack number)
+    Acknowledgment number (raw): 1629552095
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 235
+    [Calculated window size: 30080]
+    [Window size scaling factor: 128]
+    Checksum: 0xabf8 [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (717 bytes)
+Hypertext Transfer Protocol
+    HTTP/1.1 401 Unauthorized\r\n
+    Date: Thu, 01 Sep 2022 09:49:24 GMT\r\n
+    Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.30 mod_perl/2.0.11 Perl/v5.16.3\r\n
+    WWW-Authenticate: Basic realm="wireshark-students only"\r\n
+    Content-Length: 381\r\n
+    Keep-Alive: timeout=5, max=100\r\n
+    Connection: Keep-Alive\r\n
+    Content-Type: text/html; charset=iso-8859-1\r\n
+    \r\n
+    [HTTP response 1/1]
+    [Time since request: 0.113066330 seconds]
+    [Request in frame: 9]
+    [Request URI: http://gaia.cs.umass.edu/wireshark-labs/protected_pages/HTTP-wireshark-file5.html]
+    File Data: 381 bytes
+Line-based text data: text/html (12 lines)
+    <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n
+    <html><head>\n
+    <title>401 Unauthorized</title>\n
+    </head><body>\n
+    <h1>Unauthorized</h1>\n
+    <p>This server could not verify that you\n
+    are authorized to access the document\n
+    requested.  Either you supplied the wrong\n
+    credentials (e.g., bad password), or your\n
+    browser doesn't understand how to supply\n
+    the credentials required.</p>\n
+    </body></html>\n
+
+No.     Time           Source                Destination           Protocol Length Info
+     33 10.761018463   192.168.8.141         128.119.245.12        HTTP     522    GET /wireshark-labs/protected_pages/HTTP-wireshark-file5.html HTTP/1.1 
+
+Frame 33: 522 bytes on wire (4176 bits), 522 bytes captured (4176 bits) on interface eno1, id 0
+Ethernet II, Src: Private_46:21:47 (b0:25:aa:46:21:47), Dst: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac)
+Internet Protocol Version 4, Src: 192.168.8.141, Dst: 128.119.245.12
+Transmission Control Protocol, Src Port: 45910, Dst Port: 80, Seq: 1, Ack: 1, Len: 456
+    Source Port: 45910
+    Destination Port: 80
+    [Stream index: 3]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 456]
+    Sequence Number: 1    (relative sequence number)
+    Sequence Number (raw): 2390171929
+    [Next Sequence Number: 457    (relative sequence number)]
+    Acknowledgment Number: 1    (relative ack number)
+    Acknowledgment number (raw): 1497211408
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 502
+    [Calculated window size: 64256]
+    [Window size scaling factor: 128]
+    Checksum: 0x40a8 [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (456 bytes)
+Hypertext Transfer Protocol
+    GET /wireshark-labs/protected_pages/HTTP-wireshark-file5.html HTTP/1.1\r\n
+    Host: gaia.cs.umass.edu\r\n
+    User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:103.0) Gecko/20100101 Firefox/103.0\r\n
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8\r\n
+    Accept-Language: en-US,en;q=0.5\r\n
+    Accept-Encoding: gzip, deflate\r\n
+    Connection: keep-alive\r\n
+    Upgrade-Insecure-Requests: 1\r\n
+    Authorization: Basic d2lyZXNoYXJrLXN0dWRlbnRzOm5ldHdvcms=\r\n
+    \r\n
+    [Full request URI: http://gaia.cs.umass.edu/wireshark-labs/protected_pages/HTTP-wireshark-file5.html]
+    [HTTP request 1/1]
+    [Response in frame: 35]
+
+No.     Time           Source                Destination           Protocol Length Info
+     35 10.869200569   128.119.245.12        192.168.8.141         HTTP     556    HTTP/1.1 200 OK  (text/html)
+
+Frame 35: 556 bytes on wire (4448 bits), 556 bytes captured (4448 bits) on interface eno1, id 0
+Ethernet II, Src: GLTechno_1a:c4:ac (94:83:c4:1a:c4:ac), Dst: Private_46:21:47 (b0:25:aa:46:21:47)
+Internet Protocol Version 4, Src: 128.119.245.12, Dst: 192.168.8.141
+Transmission Control Protocol, Src Port: 80, Dst Port: 45910, Seq: 1, Ack: 457, Len: 490
+    Source Port: 80
+    Destination Port: 45910
+    [Stream index: 3]
+    [Conversation completeness: Complete, WITH_DATA (31)]
+    [TCP Segment Len: 490]
+    Sequence Number: 1    (relative sequence number)
+    Sequence Number (raw): 1497211408
+    [Next Sequence Number: 491    (relative sequence number)]
+    Acknowledgment Number: 457    (relative ack number)
+    Acknowledgment number (raw): 2390172385
+    1000 .... = Header Length: 32 bytes (8)
+    Flags: 0x018 (PSH, ACK)
+    Window: 235
+    [Calculated window size: 30080]
+    [Window size scaling factor: 128]
+    Checksum: 0xa316 [unverified]
+    [Checksum Status: Unverified]
+    Urgent Pointer: 0
+    Options: (12 bytes), No-Operation (NOP), No-Operation (NOP), Timestamps
+    [Timestamps]
+    [SEQ/ACK analysis]
+    TCP payload (490 bytes)
+Hypertext Transfer Protocol
+    HTTP/1.1 200 OK\r\n
+    Date: Thu, 01 Sep 2022 09:49:32 GMT\r\n
+    Server: Apache/2.4.6 (CentOS) OpenSSL/1.0.2k-fips PHP/7.4.30 mod_perl/2.0.11 Perl/v5.16.3\r\n
+    Last-Modified: Thu, 01 Sep 2022 05:59:01 GMT\r\n
+    ETag: "84-5e7974f68e4f1"\r\n
+    Accept-Ranges: bytes\r\n
+    Content-Length: 132\r\n
+    Keep-Alive: timeout=5, max=100\r\n
+    Connection: Keep-Alive\r\n
+    Content-Type: text/html; charset=UTF-8\r\n
+    \r\n
+    [HTTP response 1/1]
+    [Time since request: 0.108182106 seconds]
+    [Request in frame: 33]
+    [Request URI: http://gaia.cs.umass.edu/wireshark-labs/protected_pages/HTTP-wireshark-file5.html]
+    File Data: 132 bytes
+Line-based text data: text/html (6 lines)
+    \n
+    <html>\n
+    \n
+    This page is password protected!  If you're seeing this, you've downloaded the page correctly <br>\n
+    Congratulations!\n
+    </html>
+\end{lstlisting}
+
+\begin{enumerate}
+\setcounter{enumi}{17}
+\item The server responds with a 401 status code and Unauthorized phrase to the first request with a \texttt{WWW-Authenticate: Basic realm="wireshark-students only"} header, meaning the client has to authentificate.
+\item In the second request there is a \texttt{Authorization: Basic d2lyZXNoYXJrLXN0dWRlbnRzOm5ldHdvcms=} header. This is for the HTTP authentification with an base64 encoded \texttt{username:password} couple.
+\end{enumerate}
+
+HTTP enable the server to ask for authentification and the client to authentificate thanks to the headers. Whenever client tries out authorization, new HTTP packets are sent to the server to check. We have to be carefull that these informations of authentification are sent as base64 encoded so they are not protected against sniffers, meaning that they can be stolen by a malicious person. That is one of reasons why basic HTTP is not used anymore in some websites.
+
+\chapter{Question 20}
+
+The \texttt{Connection: Keep-Alive} means that the host wants to have a persistant connection to the other host (the TCP socket will not be closed), we should use this header if we know that we will need other requests to the same server. We must use the \texttt{Connection: Close} header when we don't need more requests to free the connection (close the TCP socket).
+\end{document}
