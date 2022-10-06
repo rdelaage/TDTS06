@@ -23,12 +23,17 @@ class RouterNode():
 		self.distanceVector = deepcopy(costs)
 		
 		self.neighbors = []
+		self.routes = ["-"] * sim.NUM_NODES
+		#route to ourself is ourself
+		self.routes[ID] = ID
 		
 		#find neighbors node
 		for i in range(sim.NUM_NODES):
 			# this node is a neighbor if we don't have an infinite cost and this is not ourself
 			if self.costs[i] != sim.INFINITY and i != ID:
 				self.neighbors.append(i)
+				#neighbor so direct route
+				self.routes[i] = i
 
 		self.distanceTable = {}
 			
@@ -45,17 +50,18 @@ class RouterNode():
 
     # --------------------------------------------------
 	def recvUpdate(self, pkt):
-		print(f"update {self.myID}\n{self.distanceVector}")
 		# action only if the packet is sended to us
 		if pkt.destid == self.myID:
 			#save the distance vector in our distance table
 			self.distanceTable[pkt.sourceid] = pkt.mincost
 			
 			newDistanceVector = deepcopy(self.distanceVector)
+			newRoutes = deepcopy(self.routes)
 			#for each node of the graph update our distance vector with Dx(y) = minv{c(x,v) + Dv(y)}
 			for iNode in range(self.sim.NUM_NODES):
 				#initialiaze minimum distance to iNode to our cost to iNode
 				minDistance = self.costs[iNode]
+				minRoute = self.routes[iNode]
 				
 				#calculate minimum distance to iNode through all neighbors
 				for neighbor in self.neighbors:
@@ -64,9 +70,12 @@ class RouterNode():
 					if distanceThroughNeighbor < minDistance:
 						#only update minimum distance to iNode if we have a smaller cost
 						minDistance = distanceThroughNeighbor
+						minRoute = neighbor
 				
 				#update the distance vector with the minimum value
 				newDistanceVector[iNode] = minDistance
+				newRoutes[iNode] = minRoute
+				
 			
 			#check if the distance vector was changed
 			changed = False
@@ -77,6 +86,7 @@ class RouterNode():
 			#if the distance vector was changed we update it and send the update to all the neighbors
 			if changed:
 				self.distanceVector = newDistanceVector
+				self.routes = newRoutes
 				for neighbor in self.neighbors:
 					self.sendUpdate(RouterPacket.RouterPacket(self.myID, neighbor, self.distanceVector))
 
@@ -92,9 +102,9 @@ class RouterNode():
 				   "  at time " + str(self.sim.getClocktime()))
 		if self.sim.NUM_NODES == 5:
 			self.myGUI.println("Distancetable:\nto node |   0 |   1 |   2 |   3 |   4 |\n-------------------------------")
-		if self.sim.NUM_NODES == 4:
+		elif self.sim.NUM_NODES == 4:
 			self.myGUI.println("Distancetable:\nto node |   0 |   1 |   2 |   3 |\n-------------------------")
-		if self.sim.NUM_NODES == 3:
+		elif self.sim.NUM_NODES == 3:
 			self.myGUI.println("Distancetable:\nto node |   0 |   1 |   2 |\n-------------------")
 			
 		for neighbor in self.distanceTable:
@@ -102,6 +112,23 @@ class RouterNode():
 			for i in range(self.sim.NUM_NODES):
 				line += f" {self.distanceTable[neighbor][i]} |"
 			self.myGUI.println(line)
+			
+		if self.sim.NUM_NODES == 5:
+			self.myGUI.println("distance vector and route:\nto node |   0 |   1 |   2 |   3 |   4 |\n-------------------------------")
+		elif self.sim.NUM_NODES == 4:
+			self.myGUI.println("distance vector and route:\nto node |   0 |   1 |   2 |   3 |\n-------------------------")
+		elif self.sim.NUM_NODES == 3:
+			self.myGUI.println("distance vector and route:\nto node |   0 |   1 |   2 |\n-------------------")
+			
+		line = "dist    |"
+		for i in range(self.sim.NUM_NODES):
+			line += f" {self.distanceVector[i]} |"
+		self.myGUI.println(line)
+			
+		line = "route   |"
+		for i in range(self.sim.NUM_NODES):
+			line += f" {self.routes[i]} |"
+		self.myGUI.println(line)
 
 
     # --------------------------------------------------
