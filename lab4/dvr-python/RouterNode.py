@@ -27,7 +27,7 @@ class RouterNode():
 		#route to ourself is ourself
 		self.routes[ID] = ID
 		
-		#find neighbors node
+		#find neighbor nodes
 		for i in range(sim.NUM_NODES):
 			# this node is a neighbor if we don't have an infinite cost and this is not ourself
 			if self.costs[i] != sim.INFINITY and i != ID:
@@ -53,15 +53,29 @@ class RouterNode():
 		# action only if the packet is sended to us
 		if pkt.destid == self.myID:
 			#save the distance vector in our distance table
-			self.distanceTable[pkt.sourceid] = pkt.mincost
-			
-			newDistanceVector = deepcopy(self.distanceVector)
-			newRoutes = deepcopy(self.routes)
-			#for each node of the graph update our distance vector with Dx(y) = minv{c(x,v) + Dv(y)}
-			for iNode in range(self.sim.NUM_NODES):
+			self.distanceTable[pkt.sourceid] = deepcopy(pkt.mincost)
+			#we need to recompute the distance vector and the routes with the modified distance table
+			self.computeDistanceVectorAndRoutes()
+
+
+    # --------------------------------------------------
+	def sendUpdate(self, pkt):
+		self.sim.toLayer2(pkt)
+
+	#function to use if we need to compute the distance vector and the route
+	def computeDistanceVectorAndRoutes(self):
+		newDistanceVector = deepcopy(self.distanceVector)
+		newRoutes = deepcopy(self.routes)
+		#for each node of the graph update our distance vector with Dx(y) = minv{c(x,v) + Dv(y)}
+		for iNode in range(self.sim.NUM_NODES):
+			if iNode == self.myID:
+				#to go to us, just stay here
+				minDistance = 0
+				minRoute = self.myID
+			else:
 				#initialiaze minimum distance to iNode to our cost to iNode
-				minDistance = self.costs[iNode]
-				minRoute = self.routes[iNode]
+				minDistance = self.sim.INFINITY
+				minRoute = "-"
 				
 				#calculate minimum distance to iNode through all neighbors
 				for neighbor in self.neighbors:
@@ -72,29 +86,40 @@ class RouterNode():
 						minDistance = distanceThroughNeighbor
 						minRoute = neighbor
 				
-				#update the distance vector with the minimum value
-				newDistanceVector[iNode] = minDistance
-				newRoutes[iNode] = minRoute
-				
+			#update the distance vector with the minimum value
+			newDistanceVector[iNode] = minDistance
+			newRoutes[iNode] = minRoute
 			
-			#check if the distance vector was changed
-			changed = False
-			for iNode in range(self.sim.NUM_NODES):
-				if newDistanceVector[iNode] != self.distanceVector[iNode]:
-					changed = True
+		
+		#check if the distance vector was changed
+		changed = False
+		for iNode in range(self.sim.NUM_NODES):
+			if newDistanceVector[iNode] != self.distanceVector[iNode]:
+				changed = True
+		
+		#if the distance vector was changed we update it and send the update to all the neighbors
+		if changed:
+			self.distanceVector = newDistanceVector
+			self.routes = newRoutes
+			#send the distance vector to all neighbors with poison reverse if enabled
+			self.sendUpdateToAllNeighbors()
+
+	#function to use each time we want to send an updated distance vector to all our neighbor, it will apply poison reverse algorithm if enabled
+	def sendUpdateToAllNeighbors(self):
+		# apply to all neighbors
+		for neighbor in self.neighbors:
+			# we make a deepcopy of the distance vector in order to alter it
+			distanceVectorToSend = deepcopy(self.distanceVector)
 			
-			#if the distance vector was changed we update it and send the update to all the neighbors
-			if changed:
-				self.distanceVector = newDistanceVector
-				self.routes = newRoutes
-				for neighbor in self.neighbors:
-					self.sendUpdate(RouterPacket.RouterPacket(self.myID, neighbor, self.distanceVector))
-
-
-    # --------------------------------------------------
-	def sendUpdate(self, pkt):
-		self.sim.toLayer2(pkt)
-
+			# modify the distance vector only if poison reverse is enabled
+			if self.sim.POISONREVERSE:
+				for i in range(self.sim.NUM_NODES):
+					# for each node, if the route to this node is through the neighbor, set a infinite distance to this node
+					if self.routes[i] == neighbor:
+						distanceVectorToSend[i] = self.sim.INFINITY
+			
+			#send the altered vector
+			self.sendUpdate(RouterPacket.RouterPacket(self.myID, neighbor, distanceVectorToSend))
 
     # --------------------------------------------------
 	def printDistanceTable(self):
@@ -133,4 +158,7 @@ class RouterNode():
 
     # --------------------------------------------------
 	def updateLinkCost(self, dest, newcost):
-		pass
+		# we save the new link cost to the neighbor
+		self.costs[dest] = newcost
+		# we need to recompute the distance vector and the routes with the modified costs
+		self.computeDistanceVectorAndRoutes()
