@@ -38,11 +38,12 @@ class RouterNode():
 		self.distanceTable = {}
 			
 		for neighbor in self.neighbors:
-			self.distanceTable[neighbor] = [0] * sim.NUM_NODES
+			#we don't know distance from w to y so Dw(y) = INFINITY
+			self.distanceTable[neighbor] = [sim.INFINITY] * sim.NUM_NODES
 			# feed distance vector for each neighbor node (Dw(y) y in N)
-			for i in range(sim.NUM_NODES):
-				#we don't know distance from w to y so Dw(y) = INFINITY
-				self.distanceTable[neighbor][i] = sim.INFINITY
+#			for i in range(sim.NUM_NODES):
+#				#we don't know distance from w to y so Dw(y) = INFINITY
+#				self.distanceTable[neighbor][i] = sim.INFINITY
 
 		# send our distance vector to all neighbors
 		for neighbor in self.neighbors:
