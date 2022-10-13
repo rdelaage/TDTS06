@@ -74,7 +74,7 @@ class RouterNode():
 				minDistance = 0
 				minRoute = self.myID
 			else:
-				#initialiaze minimum distance to iNode to our cost to iNode
+				#initialiaze minimum distance and route with max value
 				minDistance = self.sim.INFINITY
 				minRoute = "-"
 				
