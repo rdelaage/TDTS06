@@ -13,37 +13,38 @@ class RouterNode():
 
     # --------------------------------------------------
 	def __init__(self, ID, sim, costs):
+		# save initializaton informations and create a GUI
 		self.myID = ID
 		self.sim = sim
 		self.myGUI = GuiTextArea.GuiTextArea("	Output window for Router #" + str(ID) + "  ")
 
 		self.costs = deepcopy(costs)
 		
-		# feed distance vector from ourself (Dx(y), y in N)
+		# feed distance vector from ourself (Dx(y), y in N), at first iteration this is equal to the costs vector
 		self.distanceVector = deepcopy(costs)
 		
+		#initialize empty neigbors array and route array with default unreachable routes
 		self.neighbors = []
 		self.routes = ["-"] * sim.NUM_NODES
 		#route to ourself is ourself
 		self.routes[ID] = ID
 		
-		#find neighbor nodes
+		#find neighbor nodes, we check each node of the network
 		for i in range(sim.NUM_NODES):
 			# this node is a neighbor if we don't have an infinite cost and this is not ourself
 			if self.costs[i] != sim.INFINITY and i != ID:
+				# append the node to the neighbors array
 				self.neighbors.append(i)
-				#neighbor so direct route
+				#neighbor so we have a direct route
 				self.routes[i] = i
 
+		#the distance table contains latest distance vector received from neighbors
 		self.distanceTable = {}
-			
+		
+		#for each neighbor, initialize its distance vector to infinity for all nodes
 		for neighbor in self.neighbors:
 			#we don't know distance from w to y so Dw(y) = INFINITY
 			self.distanceTable[neighbor] = [sim.INFINITY] * sim.NUM_NODES
-			# feed distance vector for each neighbor node (Dw(y) y in N)
-#			for i in range(sim.NUM_NODES):
-#				#we don't know distance from w to y so Dw(y) = INFINITY
-#				self.distanceTable[neighbor][i] = sim.INFINITY
 
 		# send our distance vector to all neighbors
 		for neighbor in self.neighbors:
@@ -64,13 +65,15 @@ class RouterNode():
 		self.sim.toLayer2(pkt)
 
 	#function to use if we need to compute the distance vector and the route
+	#we used a method to avoid code duplication because this mechanism is used both in recvUpdate and updateLinkCost
 	def computeDistanceVectorAndRoutes(self):
+		#temporary variables for the new routes vector and new distance vector
 		newDistanceVector = deepcopy(self.distanceVector)
 		newRoutes = deepcopy(self.routes)
 		#for each node of the graph update our distance vector with Dx(y) = minv{c(x,v) + Dv(y)}
 		for iNode in range(self.sim.NUM_NODES):
 			if iNode == self.myID:
-				#to go to us, just stay here
+				#to go to us, just stay here, distance will be 0 and route ourself
 				minDistance = 0
 				minRoute = self.myID
 			else:
@@ -78,7 +81,7 @@ class RouterNode():
 				minDistance = self.sim.INFINITY
 				minRoute = "-"
 				
-				#calculate minimum distance to iNode through all neighbors
+				#calculate minimum distance to iNode through all neighbors using the cost to go to this neighbor + the distnace from this neighbor to the final node
 				for neighbor in self.neighbors:
 					#the distance to iNode through this neighbor is = to the cost to go to this neighbor + the distance from this neighbor to iNode
 					distanceThroughNeighbor = self.costs[neighbor] + self.distanceTable[neighbor][iNode]
@@ -92,7 +95,7 @@ class RouterNode():
 			newRoutes[iNode] = minRoute
 			
 		
-		#check if the distance vector was changed
+		#check if the distance vector was changed, we must iterate other the array because of python references detected as not equal
 		changed = False
 		for iNode in range(self.sim.NUM_NODES):
 			if newDistanceVector[iNode] != self.distanceVector[iNode]:
@@ -105,7 +108,7 @@ class RouterNode():
 			#send the distance vector to all neighbors with poison reverse if enabled
 			self.sendUpdateToAllNeighbors()
 
-	#function to use each time we want to send an updated distance vector to all our neighbor, it will apply poison reverse algorithm if enabled
+	#method to use each time we want to send an updated distance vector to all our neighbor, it will apply poison reverse algorithm if enabled
 	def sendUpdateToAllNeighbors(self):
 		# apply to all neighbors
 		for neighbor in self.neighbors:
@@ -116,6 +119,7 @@ class RouterNode():
 			if self.sim.POISONREVERSE:
 				for i in range(self.sim.NUM_NODES):
 					# for each node, if the route to this node is through the neighbor, set a infinite distance to this node
+					# we want to avoid that our neighbor thinks he can route through us
 					if self.routes[i] == neighbor:
 						distanceVectorToSend[i] = self.sim.INFINITY
 			
@@ -124,33 +128,39 @@ class RouterNode():
 
     # --------------------------------------------------
 	def printDistanceTable(self):
+		#header line with node ID and current time
 		self.myGUI.println("Current table for " + str(self.myID) +
 				   "  at time " + str(self.sim.getClocktime()))
+		#header of the distance table (for each possible number of node)
 		if self.sim.NUM_NODES == 5:
 			self.myGUI.println("Distancetable:\nto node |   0 |   1 |   2 |   3 |   4 |\n-------------------------------")
 		elif self.sim.NUM_NODES == 4:
 			self.myGUI.println("Distancetable:\nto node |   0 |   1 |   2 |   3 |\n-------------------------")
 		elif self.sim.NUM_NODES == 3:
 			self.myGUI.println("Distancetable:\nto node |   0 |   1 |   2 |\n-------------------")
-			
+		
+		#add a line for each neighbor with its distance vector
 		for neighbor in self.distanceTable:
 			line = "n°    " + str(neighbor) + " |"
 			for i in range(self.sim.NUM_NODES):
 				line += f" {self.distanceTable[neighbor][i]} |"
 			self.myGUI.println(line)
-			
+		
+		#header line of the node distance vector and route vector for each possible number of nodes
 		if self.sim.NUM_NODES == 5:
 			self.myGUI.println("distance vector and route:\nto node |   0 |   1 |   2 |   3 |   4 |\n-------------------------------")
 		elif self.sim.NUM_NODES == 4:
 			self.myGUI.println("distance vector and route:\nto node |   0 |   1 |   2 |   3 |\n-------------------------")
 		elif self.sim.NUM_NODES == 3:
 			self.myGUI.println("distance vector and route:\nto node |   0 |   1 |   2 |\n-------------------")
-			
+		
+		#add a line with our distance vector
 		line = "dist    |"
 		for i in range(self.sim.NUM_NODES):
 			line += f" {self.distanceVector[i]} |"
 		self.myGUI.println(line)
-			
+		
+		#add a line with our routes vector
 		line = "route   |"
 		for i in range(self.sim.NUM_NODES):
 			line += f" {self.routes[i]} |"
